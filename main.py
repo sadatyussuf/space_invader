@@ -10,6 +10,13 @@ pygame.init()
 HEIGHT = 600
 WIDTH = 800
 
+# Keeps tally of the score
+score_value = 0
+
+# COLORS
+WHITE =(255,255,255)
+BLACK =(0,0,0)
+
 # Set the screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -43,10 +50,13 @@ player_bulletX = 0
 player_bullet_state = 'ready'
 
 # Enemy Bullet image and position
-enemy_bulletImg = pygame.image.load('images/bullet1.png')
-enemy_bulletY = 480
+enemy_bulletImg = pygame.image.load('images/minus.png')
+enemy_bulletY = 0
 enemy_bulletX = 0
 enemy_bullet_state = 'ready'
+
+
+score_font = pygame.font.Font('freesansbold.ttf', 32)
 
 
 def display_player(player_x, player_y):
@@ -64,14 +74,25 @@ def display_player_bullet(player_x, bullet_y):
 
 def display_enemy_bullet(ebullet_x, ebullet_y):
     global enemy_bullet_state
-    screen.blit(enemy_bulletImg, (ebullet_x+ 16, ebullet_y +16))
+    screen.blit(enemy_bulletImg, (ebullet_x + 16, ebullet_y + 16))
 
 
 def bullet_and_enemy_collision(enemy_x, enemy_y, bullet_x, bullet_y):
-    distance = math.sqrt((math.pow(enemy_x-bullet_x, 2)) + (math.pow(enemy_y-bullet_y, 2)))
+    distance = math.sqrt((math.pow(enemy_x - bullet_x, 2)) + (math.pow(enemy_y - bullet_y, 2)))
     if distance < 27:
         return True
 
+
+def show_score():
+    score_text = score_font.render(f'Score : {str(score_value)}', True, WHITE)
+    screen.blit(score_text, dest=(10, 10))
+
+
+# Creating pygame custom USER event for enemy shooting
+enemyShoot = pygame.USEREVENT + 1
+
+# Calls the enemyShoot event for a specified amount of time
+pygame.time.set_timer(enemyShoot, 500)
 
 while True:
     screen.fill((0, 0, 0))
@@ -82,7 +103,6 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-
         # Check if any key is been pressed
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -94,11 +114,17 @@ while True:
                     player_bullet_state = 'fire'
                     player_bulletX = playerX
                     display_player_bullet(player_bulletX, player_bulletY)
-
         # Check if the pressed key has been released
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                 player_change = 0
+        # Checks if the enemyShoot event has been called
+        if event.type == enemyShoot:
+            if enemy_bullet_state == 'ready':
+                enemy_bullet_state = 'fire'
+                enemy_bulletY = enemyY
+                enemy_bulletX = enemyX
+                display_enemy_bullet(enemy_bulletX, enemy_bulletY)
 
     # Change the player's direction in the X-axis
     playerX += player_change
@@ -139,9 +165,16 @@ while True:
         player_bulletY = 480
         enemyX = random.randint(0, 750)
         enemyY = random.randint(70, 100)
+        score_value += 1
 
-    # bulletY = enemyY
-    # bulletY+=1
-    # display_enemy_bullet(enemyX, bulletY)
+    #  If the state is fire, move the bullet up
+    if enemy_bullet_state == 'fire':
+        enemy_bulletY += 6
+        display_enemy_bullet(enemy_bulletX, enemy_bulletY)
 
+    # If the bullet leaves the screen change the state and reset it's position
+    if enemy_bulletY >= 600:
+        enemy_bullet_state = 'ready'
+
+    show_score()
     pygame.display.update()
