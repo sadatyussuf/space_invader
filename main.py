@@ -14,8 +14,8 @@ WIDTH = 800
 score_value = 0
 
 # COLORS
-WHITE =(255,255,255)
-BLACK =(0,0,0)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 # Set the screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -55,8 +55,24 @@ enemy_bulletY = 0
 enemy_bulletX = 0
 enemy_bullet_state = 'ready'
 
+# The heart image representing the life of the player
+num_of_heartImg = 3
+heartImg = []
+heartX = [705, 725, 745]
+heartY = 10
+for i in range(num_of_heartImg):
+    # creating the heart image
+    heartImg.append(pygame.image.load('images/life.png'))
 
+# Score text
 score_font = pygame.font.Font('freesansbold.ttf', 32)
+
+# Game Over text
+game_over_font = pygame.font.Font('freesansbold.ttf', 64)
+
+
+def life_bar(x, y, i):
+    screen.blit(heartImg[i], (x, y))
 
 
 def display_player(player_x, player_y):
@@ -86,6 +102,11 @@ def bullet_and_enemy_collision(enemy_x, enemy_y, bullet_x, bullet_y):
 def show_score():
     score_text = score_font.render(f'Score : {str(score_value)}', True, WHITE)
     screen.blit(score_text, dest=(10, 10))
+
+
+def game_over_text():
+    game_over_texts = game_over_font.render('GAME OVER', True, (255, 255, 255))
+    screen.blit(game_over_texts, (200, 250))
 
 
 # Creating pygame custom USER event for enemy shooting
@@ -125,6 +146,15 @@ while True:
                 enemy_bulletY = enemyY
                 enemy_bulletX = enemyX
                 display_enemy_bullet(enemy_bulletX, enemy_bulletY)
+
+    # check if player has more lives left
+    if num_of_heartImg == 0:
+        enemyY = 2000
+        game_over_text()
+    else:
+        # Show the heartImg on screen
+        for i in range(num_of_heartImg):
+            life_bar(heartX[i], heartY, i)
 
     # Change the player's direction in the X-axis
     playerX += player_change
@@ -175,6 +205,15 @@ while True:
     # If the bullet leaves the screen change the state and reset it's position
     if enemy_bulletY >= 600:
         enemy_bullet_state = 'ready'
+
+    # If the the bullet from the player hits the enemy reset the bullet and respawn the enemy
+    collision = bullet_and_enemy_collision(playerX, playerY, enemy_bulletX, enemy_bulletY)
+    if collision:
+        enemy_bullet_state = 'ready'
+        enemy_bulletY = enemyY
+        playerX = 370
+        playerY = 480
+        num_of_heartImg -= 1
 
     show_score()
     pygame.display.update()
